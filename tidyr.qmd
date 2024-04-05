@@ -189,7 +189,7 @@ mean_bm_tidy <- penguins |>
   tidyr::drop_na(body_mass_g) |>  
   group_by(species) |> 
   summarise(mean(body_mass_g)) |> 
-  glimpse()
+  print()
 ```
 
 Hay que destacar que la función `drop_na()`, elimina los valores NA de la variable que le indiquemos entre los paréntesis, como se ha realizado en el ejemplo anterior. Pero si se aplica la misma función `drop_na()`, sin indicar nada como argumento, por defecto eliminará todas las filas donde se encuentre algún valor NA.
@@ -199,9 +199,7 @@ mean_bm_tidy_2 <- penguins |>
   tidyr::drop_na() |>  
   group_by(species) |> 
   summarise(mean(body_mass_g)) |> 
-  glimpse()
-
-glimpse(mean_bm_tidy_2)
+  print()
 ```
 
 Los resultados son diferentes.
@@ -212,7 +210,7 @@ En otro caso, también podría resultar interesante cambiar los valores NA por 0
 # tidyr
 penguins_mod_tidy <- penguins |>  
   mutate(body_mass_g = replace_na(body_mass_g, 0)) |> 
-  glimpse()
+  print()
 
 # R base
 penguins_mod <- penguins

@@ -360,11 +360,13 @@ mean_bm_tidy <- penguins |>
   tidyr::drop_na(body_mass_g) |>  
   group_by(species) |> 
   summarise(mean(body_mass_g)) |> 
-  glimpse()
-#> Rows: 3
-#> Columns: 2
-#> $ species             <fct> Adelie, Chinstrap, Gentoo
-#> $ `mean(body_mass_g)` <dbl> 3700.662, 3733.088, 5076.016
+  print()
+#> # A tibble: 3 x 2
+#>   species   `mean(body_mass_g)`
+#>   <fct>                   <dbl>
+#> 1 Adelie                  3701.
+#> 2 Chinstrap               3733.
+#> 3 Gentoo                  5076.
 ```
 
 Hay que destacar que la función `drop_na()`, elimina los valores NA de
@@ -378,17 +380,13 @@ mean_bm_tidy_2 <- penguins |>
   tidyr::drop_na() |>  
   group_by(species) |> 
   summarise(mean(body_mass_g)) |> 
-  glimpse()
-#> Rows: 3
-#> Columns: 2
-#> $ species             <fct> Adelie, Chinstrap, Gentoo
-#> $ `mean(body_mass_g)` <dbl> 3706.164, 3733.088, 5092.437
-
-glimpse(mean_bm_tidy_2)
-#> Rows: 3
-#> Columns: 2
-#> $ species             <fct> Adelie, Chinstrap, Gentoo
-#> $ `mean(body_mass_g)` <dbl> 3706.164, 3733.088, 5092.437
+  print()
+#> # A tibble: 3 x 2
+#>   species   `mean(body_mass_g)`
+#>   <fct>                   <dbl>
+#> 1 Adelie                  3706.
+#> 2 Chinstrap               3733.
+#> 3 Gentoo                  5092.
 ```
 
 Los resultados son diferentes.
@@ -401,17 +399,22 @@ trabajando.
 # tidyr
 penguins_mod_tidy <- penguins |>  
   mutate(body_mass_g = replace_na(body_mass_g, 0)) |> 
-  glimpse()
-#> Rows: 344
-#> Columns: 8
-#> $ species           <fct> Adelie, Adelie, Adelie, Adelie, Adelie, Adelie, Adel~
-#> $ island            <fct> Torgersen, Torgersen, Torgersen, Torgersen, Torgerse~
-#> $ bill_length_mm    <dbl> 39.1, 39.5, 40.3, NA, 36.7, 39.3, 38.9, 39.2, 34.1, ~
-#> $ bill_depth_mm     <dbl> 18.7, 17.4, 18.0, NA, 19.3, 20.6, 17.8, 19.6, 18.1, ~
-#> $ flipper_length_mm <int> 181, 186, 195, NA, 193, 190, 181, 195, 193, 190, 186~
-#> $ body_mass_g       <int> 3750, 3800, 3250, 0, 3450, 3650, 3625, 4675, 3475, 4~
-#> $ sex               <fct> male, female, female, NA, female, male, female, male~
-#> $ year              <int> 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007, 2007~
+  print()
+#> # A tibble: 344 x 8
+#>    species island    bill_length_mm bill_depth_mm flipper_length_mm body_mass_g
+#>    <fct>   <fct>              <dbl>         <dbl>             <int>       <int>
+#>  1 Adelie  Torgersen           39.1          18.7               181        3750
+#>  2 Adelie  Torgersen           39.5          17.4               186        3800
+#>  3 Adelie  Torgersen           40.3          18                 195        3250
+#>  4 Adelie  Torgersen           NA            NA                  NA           0
+#>  5 Adelie  Torgersen           36.7          19.3               193        3450
+#>  6 Adelie  Torgersen           39.3          20.6               190        3650
+#>  7 Adelie  Torgersen           38.9          17.8               181        3625
+#>  8 Adelie  Torgersen           39.2          19.6               195        4675
+#>  9 Adelie  Torgersen           34.1          18.1               193        3475
+#> 10 Adelie  Torgersen           42            20.2               190        4250
+#> # i 334 more rows
+#> # i 2 more variables: sex <fct>, year <int>
 
 # R base
 penguins_mod <- penguins
