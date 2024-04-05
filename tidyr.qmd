@@ -1,0 +1,221 @@
+---
+title: "[tidyr](https://tidyr.tidyverse.org/)"
+toc: true
+toc-depth: 4
+format:
+  gfm: default
+  html:
+    css: ecosistemas.css
+knitr:
+  opts_chunk: 
+    echo: true
+    eval: true
+    error: true
+    collapse: true
+    comment: "#>" 
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+> Los datos ordenados (en formato *tidy*) implican que:
+>
+> 1.  Cada columna es una variable.
+>
+> 2.  Cada fila es una observación.
+>
+> 3.  Cada celda o casilla tiene un único valor.
+>
+> `tidyr` ofrece múltiples aplicaciones con el objetivo de principal de crear datos ordenados, lo que facilita la conexión del flujo de trabajo entre paquetes dentro del entorno *tidyverse*.
+
+```{r libreria}
+# install.packages("tidyr")
+library(tidyr)
+
+# o directamente
+library(tidyverse)
+```
+
+## "Pivotar" datos
+
+"Pivotar" es reorganizar los datos colapsando o expandiendo las columnas. Existen dos funciones principales para esto: `pivot_longer()` y `pivot_wider()`.
+
+### `pivot_longer()`
+
+Colapsa muchas columnas en una sola ajustándose al formato *tidy*.
+
+La siguiente base de datos no está en formato *tidy*, ya que el nivel de ingresos es una única variable y por tanto, debería estar en una única columna:
+
+```{r cargando relig_income y pivot_longer}
+relig_income <- as_tibble(relig_income)
+head(relig_income)
+```
+
+Se agrupa toda la información usando tres variables: "religion", "income" and "frequency":
+
+```{r}
+# tidyr
+relig_income |> 
+  pivot_longer(-religion, names_to = "income", values_to = "frequency") |> 
+  head(n = 12L)
+
+# R base
+stacked_relig_income <- data.frame(relig_income$religion, stack(relig_income, select = -religion))
+
+colnames(stacked_relig_income) <- c("religion", "frequency", "income")
+
+stacked_relig_income <- stacked_relig_income[ ,c(1,3,2)]                                 
+head(stacked_relig_income, n = 20L)
+```
+
+Para realizar la misma tarea en R base se puede usar la función `stack()`.
+
+### `pivot_wider()`
+
+Funciona a la inversa de `pivot_longer()`, expande los datos (hace la base de datos más ancha) dividiendo la información de una variable en varias columnas diferentes. Partiendo de la base da datos generada anteriormente con `nest()`, renombrándola como `relig_income_tidy`.
+
+```{r, echo = F}
+# guardar el dataset ordenado generado anteriormente
+relig_income_tidy <- relig_income |>  
+  pivot_longer(-religion, names_to = "income", values_to = "frequency")
+```
+
+```{r pivot_wider}
+# tidyr
+relig_income_tidy |> 
+  pivot_wider(names_from = "income", values_from = "frequency") |> head() 
+
+# R base
+unstacked_relig <- unstack(stacked_relig_income, frequency ~ income)
+
+unstacked_relig_correct <- cbind(unique(stacked_relig_income$religion), unstacked_relig)
+
+colnames(unstacked_relig_correct) <- colnames(relig_income)
+
+head(unstacked_relig_correct)
+```
+
+Con `R base` se podría usar la función `unstack()`.
+
+## "Anidar" y "Desanidar" datos
+
+"Anidar" (Nesting) es agrupar los datos en una lista anidada (una lista con otro tipo de objetos dentro). "Desanidar" (Rectangling) es ordenar los datos de una lista anidada a un formato *tidy*. Para ello, se usan dos funciones principales: `nest()` & `unnest()`.
+
+### `nest()`
+
+Crea una lista anidada o un set de datos dentro de las celdas de una base de datos mayor.
+
+Desde `relig_income` se puede anidar "income" y "frequency" para cada religión:
+
+```{r}
+relig_income_tidy |> nest(data = c(income, frequency))
+```
+
+Cada valor del objeto creado "data" es un tibble que recoge información de la siguiente forma: (ejemplo - `relig_income_tidy[[2]][[1]]`):
+
+```{r, echo = F, message = F}
+library(kableExtra)
+kable((relig_income_tidy |> nest(data = c(income, frequency)))[[2]][[1]])
+```
+
+Usando `R base` se podría usar `list()`, pero será necesario `tibble::tibble()`, ya que el formato data frame no permite trabajar con este tipo de datos.
+
+Para este ejemplo, simplemente usaremos las primeras 4 filas de `relig_income_tidy` :
+
+```{r}
+Agnostic <- relig_income_tidy[relig_income_tidy$religion == "Agnostic", -1]
+Atheist <- relig_income_tidy[relig_income_tidy$religion == "Atheist", -1]
+Buddhist <- relig_income_tidy[relig_income_tidy$religion == "Buddhist", -1]
+Catholic <- relig_income_tidy[relig_income_tidy$religion == "Catholic", -1]
+Religion <- c("Agnostic", "Atheist", "Buddhist", "Catholic")
+
+data <- list(Agnostic, Atheist, Buddhist, Catholic)
+
+tibble(Religion, data)
+```
+
+### `unnest()`
+
+La función inversa a `nest()`. A partir de una base de datos con datos anidados, se puede generar una base de datos en formato *tidy*.
+
+```{r, echo = FALSE}
+relig_income_tidy |> nest(data = c(income, frequency)) -> relig_income_nested
+```
+
+Partiendo de la base da datos anidada que hemos generado anteriormente con `nest()`, renombrándola como `relig_income_nested`:
+
+```{r}
+relig_income_nested |> unnest(cols = "data") |>  head(n = 20L)
+```
+
+En `R base` necesitaremos acceder a los valores individuales de cada tibble incluido en la variable "data", de forma iterativa mediante un bucle y el uso de dobles corchetes:
+
+```{r}
+unnRbase <- data.frame() # generamos un dataframe vacio que iremos llenando
+
+for(i in 1:nrow(relig_income_nested)) {
+  unnRbase <- rbind(unnRbase, data.frame(relig_income_nested[[1]][[i]], relig_income_nested[[2]][[i]]))
+}
+
+colnames(unnRbase)[1] <- "religion"
+head(unnRbase, n = 20L)    
+```
+
+## Trabajar con NAs
+
+Durante el procesado de datos es común encontrar valores NA (not available) dentro de los objetos con los que se esté trabajando. Estos valores a veces pueden resultar problemáticos para realizar determinadas operaciones, por lo que existen funciones específicas para tratarlos.
+
+Se trabajará con la base de datos `palmerpenguins`.
+
+```{r}
+library(palmerpenguins)
+```
+
+Vamos a intentar calcular el valor medio de la variable `body mass`.
+
+```{r}
+mean_bm <- mean(penguins$body_mass_g) # error NA
+
+# si se indica el argumento na.rm (na remove), se puede realizar el cálculo
+mean_bm <- mean(penguins$body_mass_g, na.rm = TRUE)
+```
+
+### `drop_na()`
+
+En tidyverse, existe esta función para eliminar los valores NA. En el siguiente ejemplo, se calcula el valor medio de `body mass` por cada especie.
+
+```{r}
+mean_bm_tidy <- penguins |> 
+  tidyr::drop_na(body_mass_g) |>  
+  group_by(species) |> 
+  summarise(mean(body_mass_g)) |> 
+  glimpse()
+```
+
+Hay que destacar que la función `drop_na()`, elimina los valores NA de la variable que le indiquemos entre los paréntesis, como se ha realizado en el ejemplo anterior. Pero si se aplica la misma función `drop_na()`, sin indicar nada como argumento, por defecto eliminará todas las filas donde se encuentre algún valor NA.
+
+```{r}
+mean_bm_tidy_2 <- penguins |> 
+  tidyr::drop_na() |>  
+  group_by(species) |> 
+  summarise(mean(body_mass_g)) |> 
+  glimpse()
+
+glimpse(mean_bm_tidy_2)
+```
+
+Los resultados son diferentes.
+
+En otro caso, también podría resultar interesante cambiar los valores NA por 0, en función de la naturaleza de los datos con los que se esté trabajando.
+
+```{r}
+# tidyr
+penguins_mod_tidy <- penguins |>  
+  mutate(body_mass_g = replace_na(body_mass_g, 0)) |> 
+  glimpse()
+
+# R base
+penguins_mod <- penguins
+penguins_mod[which(is.na(penguins_mod$body_mass_g) == TRUE), 6] <- 0
+penguins_mod
+```
