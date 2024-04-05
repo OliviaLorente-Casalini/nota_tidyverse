@@ -1,0 +1,368 @@
+---
+title: "[stringr](https://stringr.tidyverse.org/)"
+toc: true
+toc-depth: 4
+format:
+  gfm: default
+  html:
+    css: ecosistemas.css
+knitr:
+  opts_chunk: 
+    echo: true
+    eval: true
+    error: true
+    collapse: true
+    comment: "#>" 
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+> El paquete stringr proporciona una serie de funciones para trabajar con cadenas de texto en R. Una cadena de texto o de caracteres es una secuencia ordenada de letras, números u otros signos que se representan entre comillas y que se leen como texto. Este tipo de datos tienen mucha importancia en procesos de preparación y limpieza de datos.
+>
+> Las expresiones regulares, RegExp or [regular expresions](https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html) son una secuencia de caracteres que define un patrón de búsqueda. Su uso es muy común en la manipulación de textos o cadenas de caracteres.
+
+```{r libreria}
+# install.packages("stringr")
+library(stringr)
+
+# o directamente
+library(tidyverse)
+```
+
+Cadena de texto de ejemplo:
+
+```{r ejemplo de input}
+
+estrofa <- "Hay hombres que luchan un día. Y son buenos. Hay otros que luchan un año. Y son mejores. Hay quienes luchan muchos años.Y son muy buenos. Pero hay los que luchan toda la vida. Esos son los imprescindibles. Bertolt Brecht"
+
+versos <- c("Hay hombres que luchan un día.", "Y son buenos.", "Hay otros que luchan un año.", "Y son mejores.", "Hay quienes luchan muchos años.", "Y son muy buenos.", "Pero hay los que luchan toda la vida.", "Esos son los imprescindibles.", "Bertolt Brecht.")
+```
+
+## Detectar coincidencias
+
+Funciones que detectan una coincidencia entre una cadena de texto y un patrón específico.
+
+### `str_detect()`
+
+La función `str_detect(texto, patrón)` devuelve una sentencia lógica (verdadero = T, falso = F) por cada elemento que indica si se produce o no coincidencia.
+
+```{r str_detect()}
+# stringr
+str_detect(estrofa, "luchan")
+str_detect(versos, "luchan")
+
+# R base
+grepl("luchan", estrofa)
+grepl("luchan", versos)
+```
+
+También se pueden emplear funciones para detectar patrones en función del inicio o final de una cadena de caracteres.
+
+```{r inicio o final}
+# stringr presenta las funciones str_starts() y str_ends()
+str_starts(estrofa, "Hay hombres que luchan")
+str_starts(estrofa, "Hay mujeres que luchan")
+str_starts(versos, "Hay")
+
+str_ends(estrofa, "Bertolt Brecht")
+str_ends(estrofa, "otra persona")
+
+
+# R base emplea el símbolo ^ para indicar el inicio
+grepl("^Hay hombres que luchan", estrofa)
+grepl("^Hay mujeres que luchan", estrofa)
+grepl("^Hay", versos)
+
+# y el símbolo $ para indicar el final
+grepl("Bertolt Brecht$", estrofa)
+grepl("otra persona$", estrofa)
+```
+
+### `str_locate()`
+
+La función `str_locate(texto, patrón)` devuelve la posición, dentro de cada elemento, de los caracteres donde se produce la primera coincidecia.
+
+```{r str_locate()}
+# stringr
+str_locate(versos, "luchan")
+str_locate(estrofa, "luchan")
+
+# R base
+as.numeric(regexpr("luchan", versos))
+locate_base <- matrix(c(regexpr("luchan", versos), 
+                       (regexpr("luchan", versos) + attr(regexpr("luchan", versos), "match.length")-1)),
+                        ncol = 2)
+locate_base[locate_base < 0] <- NA
+colnames(locate_base) <- c("start", "end")
+print(locate_base)
+```
+
+La función `str_locate_all(texto, patrón)` busca todas las coincidencias y devuelve una matriz con las posiciones.
+
+```{r str_locate_all()}
+# stringr
+str_locate_all(estrofa, "luchan")
+
+# R base
+unlist(gregexpr("luchan", estrofa))
+locate_base <- matrix(c(gregexpr("luchan", estrofa)[[1]], 
+                       (gregexpr("luchan", estrofa)[[1]] + attr(gregexpr("luchan", estrofa)[[1]], "match.length")-1)),
+                        ncol = 2)
+locate_base[locate_base < 0] <- NA
+colnames(locate_base)
+print(locate_base)
+```
+
+### `str_count()`
+
+La función `str_count(texto, patrón)` cuenta el número de coincidencias que se producen por cada elemento de la cadena de texto.
+
+```{r str_count()}
+# stringr
+str_count(versos, "a")
+str_count(estrofa, "a")
+
+# R base
+lengths(regmatches(estrofa, gregexpr("a", estrofa)))
+lengths(regmatches(versos, gregexpr("a", versos)))
+```
+
+## Extracción de texto
+
+### `str_sub()`
+
+La función `str_sub(texto, inicio, final)` extrae la parte de la cadena de texto que se encuentran entre los caracteres indicados (inicio y final).
+
+```{r str_sub() 1}
+# stringr
+str_sub(estrofa, 5L, 15L)
+str_sub(versos, 1L, 5L)
+
+# R base
+substr(estrofa, 5L, 15L)
+substr(versos, 1L, 5L)
+```
+
+### `str_subset()`
+
+La función `str_subset(texto, patrón)` extrae los elementos (completos) de la cadena que contengan el patrón indicado.
+
+```{r str_subset()}
+# stringr
+str_subset(versos, "son")
+
+# R base
+versos[grep("son", versos)]
+```
+
+### `str_extract()`
+
+La función `str_extract(texto, patrón)` extrae el patrón indicado (sólo el patrón, no el elemento completo) en todos los elementos donde se produce coincidencia. Extrae la primera coincidencia. Si no se produce coincidencia devuelve NA.
+
+```{r str_extract()}
+# stringr
+str_extract(versos, "son")
+str_extract(estrofa, "son")
+
+
+# R base
+v1 <- sub(".*\\b(son\\w*).*", "\\1", versos, perl = T)
+v1[v1 != "son"] <- NA
+print(v1)
+
+e1 <- sub(".*\\b(son\\w*).*", "\\1", estrofa, perl = T)
+e1[e1 != "son"] <- NA
+print(e1)
+```
+
+Con la función `str_extract_all()` se extraen todas las coincidencias en formato lista.
+
+```{r str_extract_all()}
+# stringr
+str_extract_all(estrofa, "son")
+
+# R base
+versos <- unlist(strsplit(estrofa, "\\."))
+versos <- gsub("^\\s", "", versos)
+v2 <- sub(".*\\b(son\\w*).*", "\\1", versos, perl = T)
+v2[v2 != "son"] <- NA; as.vector(na.omit(v2))
+print(v2)
+```
+
+### `str_match()`
+
+La función `str_match(texto, patrón)` realiza lo mismo que la función `str_extract()` pero devuelve el resultado en forma de matriz. Con ayuda de lenguaje regular se pueden extraer grupos de palabras. En este caso, en la primera columna aparece la frase completa extraida y en las siguientes las palabras por separado. Con la función `str_match_all()` se extraen todas las coincidencias y el output es una lista de matrices.
+
+```{r str_match()}
+str_match(versos, "son")
+str_match(versos, "(son) (buenos|mejores)")
+str_match(versos, "(que|son) ([^ ]+)")
+str_match(estrofa, "(que|son) ([^ ]+)")
+str_match_all(estrofa, "(que|son) ([^ ]+)")
+```
+
+## Gestión del tamaño de cadenas de texto
+
+### `str_lenght()`
+
+La función `str_length(texto)` devuelve el número de caracteres de cada elemento de la cadena de texto.
+
+```{r str_length}
+# stringr
+str_length(estrofa)
+str_length(versos)
+
+# R base
+nchar(estrofa)
+nchar(versos)
+```
+
+### `str_pad()`y `str_trunc()`
+
+Las funciones `str_pad()` y `str_trunc()` permiten acortar o alargar los elementos de la cadena de texto a una longitud constante. `str_pad()` alarga la cadena y en el argumento "pad" se coloca el/los caracter/es que se usa para rellenar. `str_trunc()` acorta la cadena de texto y permite colocar en el argumento "ellipsis" el/los caracter/es que queremos que aparezcan cuando se suprime una parte del texto.
+
+```{r str_pad() & str_trunc()}
+# stringr
+str_pad(versos, 30, side = "right", pad = "X")
+
+# R base
+versos30 <- NULL
+
+for(i in 1:length(versos)){
+  if(nchar(versos[i]) < 30){
+    add <- 30 - nchar(versos[i])
+    versos30[i] <- paste0(versos[i], paste0(rep("X", add), collapse = ""))
+  }else{
+    versos30[i] <- versos[i]
+  }
+}
+
+
+# stringr
+str_trunc(versos, 10, ellipsis = "")
+
+# R base
+elip <- ""
+paste0(substr(versos, 1L, (10 - nchar(elip))), elip)
+```
+
+### `str_trim()`
+
+La función `str_trim()` elimina los espacios al inicio de la cadena de texto en cada uno de los elementos que la componen.
+
+```{r str_trim()}
+# stringr
+versos_espacios <- unlist(strsplit(estrofa, "\\."))
+print(versos_espacios)
+str_trim(versos_espacios)
+
+# R base
+trimws(versos_espacios)
+```
+
+## Editar cadenas de texto
+
+### `str_sub()`
+
+La función `str_sub(texto, inicio, final)`, además de extraer un fragmento del texto, también permite sustiuirlo, asignándole una nueva cadena de texto.
+
+```{r str_sub()}
+# stringr
+estrofa1 <- estrofa
+str_sub(estrofa1, 1L, 11L) <- "También hay mujeres"
+
+# R base
+substr(estrofa1, 1L, 11L) <- "También hay mujeres"
+```
+
+### `str_replace()` y `str_replace_all()`
+
+La función `str_replace(texto, patrón, reemplazo)` localiza un patrón en la cadena de texto y lo sustituye por el remplazo indicado. `str_replace()` solo reemplaza la primera coinicidencia y `str_replace_all()` reempleaza todas las coincidencias.
+
+```{r str_replace() & str_replace_all()}
+# stringr
+str_replace(versos, "son", "*")
+str_replace(estrofa, "son", "*")
+str_replace_all(estrofa, "son", "*")
+
+# R base
+sub("son", "*", versos)
+sub("son", "*", estrofa)
+gsub("son", "*", estrofa)
+```
+
+### `str_to...()`
+
+Las funciones de la familia `str_to_...()` permiten cambiar mayúsculas por minúsculas. En concreto: - `str_to_lower()` - `str_to_upper()` - `str_to_sentence()` - `str_to_title()`.
+
+```{r str_to...()}
+# stringr
+str_to_lower(versos)
+str_to_upper(versos)
+str_to_sentence("me olvidé empezar la frase con mayúscula")
+str_to_title(estrofa)
+
+# R base
+tolower(versos)
+toupper(versos)
+
+s <-"me olvidé empezar la frase con mayúscula"
+paste0(toupper(substr(s, 1, 1)),
+       substr(s, 2, nchar(s)))
+
+palabras <- unlist(strsplit(estrofa, "\\s"))
+paste0(toupper(substr(palabras, 1, 1)),
+       substr(palabras, 2, nchar(palabras)))
+```
+
+## Unir y separar cadenas de texto
+
+### Unión: `str_c()` y `str_dup()`
+
+En el paquete `stringr` hay dos funciones que permiten concatenar o unir cadenas de texto. `str_c(texto1, texto2...)` une los textos especificados en el argumento y `str_dup(texto, n)` repite el texto tantas veces como se especifique en el argumento "n".
+
+```{r str_c() & str_dup()}
+# stringr
+str_c(letters, LETTERS)
+str_dup("flor", 10)
+
+# R base
+paste0(letters, LETTERS)
+paste0(rep("flor", 10), collapse = "")
+```
+
+### Separación: `str_split()` y `str_split_fixed()`
+
+Las funciones `str_split(texto, patrón)` y `str_split_fixed(texto, patrón, n)` permiten dividir cadenas de texto. La primera función divide los elementos en grupos según el patrón. La segunda función hace lo mismo pero solo en el número de grupos especificados por el argumento n.
+
+```{r str_split()}
+# stringr
+str_split(estrofa, "\\.")
+str_split_fixed(versos, " ", n = 3)
+
+# R base
+strsplit(estrofa, "\\.")
+
+list <- strsplit(versos, "\\s")
+
+for(i in 1:length(list)){
+  if(length(list[[i]]) > 3)
+    list[[i]][3] <- paste0(list[[i]][3:length(list[[i]])], collapse = " ")
+}
+t(sapply(list, "[", 1:3))
+```
+
+## Ordenar cadenas de texto
+
+Las funciones `str_order(texto)` y `str_sort(texto)` ordenan alfabéticamente los elementos de una cadena de texto. La primera devuelve los índices de los elementos ordenados y la segunda devuelve los propios elementos.
+
+```{r str_order() y str_sort()}
+# stringr
+str_order(versos)
+str_sort(versos)
+
+# R base
+order(versos)
+sort(versos)
+```
