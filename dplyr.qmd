@@ -1,0 +1,537 @@
+---
+title: "[dplyr](https://dplyr.tidyverse.org/)"
+toc: true
+toc-depth: 4
+format:
+  gfm: default
+  html:
+    css: ecosistemas.css
+knitr:
+  opts_chunk: 
+    echo: true
+    eval: true
+    error: true
+    collapse: true
+    comment: "#>" 
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+> El paquete *dplyr* facilita y agiliza algunos pasos:
+>
+> 1.  Acota las opciones disponibles, facilitando pensar qué pasos necesitamos para nuestro código.
+>
+> 2.  Proporciona funciones que se asemejan a verbos relacionados con las tareas más comunes para la manipulación de datos. Esto facilita traducir el pensamiento en código.
+>
+> 3.  Emplea rutinas más eficientes, lo que disminuye los tiempos de computación.
+
+```{r warning=FALSE, error=FALSE}
+# install.packages("dplyr")
+library(dplyr)
+
+# o directamente
+library(tidyverse)
+```
+
+## Trabajar con filas
+
+Las operaciones más comunes en el manejo y edición de datos conlleva trabajar con filas, es decir: (1) ordernarlas, (2) filtrar sus valores para obtener los subconjuntos de datos que nos interesan, o (3) combinar bases de datos verticalmente.
+
+```{r }
+# trabajar con una base de datos abierta, disponible mediante la 
+library(palmerpenguins)
+penguins <- palmerpenguins::penguins
+penguins_raw <- palmerpenguins::penguins_raw
+```
+
+### Crear subconjuntos (*subset*)
+
+Se puede extraer un pequeño subconjunto de los datos Veamos un ejemplo con la base de pingüinos: vamos a extraer los individuos hembra que pertenecen a la especie *Adelie*, con peso corporal comprendido entre 2 y 5 kg y localizados en todas las islas excepto en Torgesen.
+
+Con `dplyr`, la función principal es `filter()` y la condición lógica va entre paréntesis.
+
+```{r}
+# dplyr
+penguins_subset_tidy <- filter(penguins, 
+                               species == "Adelie", 
+                               between(body_mass_g, 2000, 5000), 
+                               island != "Torgersen")
+print(penguins_subset_tidy)
+```
+
+Con `R base` dado que queremos trabajar indexando la posición de las filas o columnas, usamos el formato `datos[filas, columnas]` o la función `subset()`.
+
+```{r}
+# R base con el indexado
+penguins_subset_rbase <- penguins[penguins$species == "Adelie" & 
+                                  penguins$body_mass_g >= 2000 &
+                                  penguins$body_mass_g <= 5000 &
+                                  penguins$island != "Torgersen", ]
+print(penguins_subset_rbase)
+
+# o con la función subset()
+penguins_subset_rbase2 <- subset(penguins,
+                                 penguins$species =="Adelie" &
+                                 penguins$body_mass_g >= 2000 &
+                                 penguins$body_mass_g <= 5000 &
+                                 penguins$island != "Torgersen"
+                                 )
+print(penguins_subset_rbase2)
+```
+
+### Ordenar filas dentro de una columna
+
+Es posible que queramos ordenar las filas de una columna de nuestro dataset, alfabética o numéricamente. En nuestro ejemplo, usamos los subconjuntos anteriores y ordenamos los valores de mayor a menor peso corporal.
+
+Con `dplyr`, usamos la función `arrange()`.
+
+```{r}
+# dplyr
+penguins_largest_dplyr <- penguins_subset_tidy |> 
+  arrange(species, desc(body_mass_g)) |> 
+  print()
+
+# R base
+penguins_largest_rbase <- penguins_subset_rbase[order(penguins_subset_rbase$body_mass_g, decreasing = TRUE), ] 
+print(penguins_largest_rbase)
+```
+
+### Seleccionar determinadas filas
+
+En algunos casos, puede que queramos crear un subconjunto de datos únicamente con algunas filas específicas. Vamos a ver esto con cuatro ejemplos de operaciones diferentes:
+
+1.  Obtener las 30 primeras filas del dataset,
+
+2.  Obtener el 30% de las primeras filas.
+
+3.  Obtener el 20% de las últimas filas.
+
+4.  Obtener las filas con las 6 longitudes de aleta más corta (dataset penguins).
+
+Con `dplyr`, usamos la función `slice()` para seleccionar horizontalmente (es decir, por filas) del subconjunto anterior, a diferencia de la anterior función `select()` que servía para seleccionar en vertical (es decir, por columnas).
+
+```{r}
+# esta función tiene algunas variables como slice_head(), slice_tail(), slice_sample(), slice_min(), slice_max()
+# 30 primeras columnas
+penguins_head30_dplyr <- penguins_subset_tidy |> 
+  slice(1:30) |>
+  print()
+
+# 30% de las primeras filas
+penguins_head30perc_dplyr <- penguins_subset_tidy |> 
+  slice_head(prop = 0.3) |>
+  print()
+
+# 20% de las últimas filas
+penguins_tail20perc_dplyr <- penguins_subset_tidy |> 
+  slice_tail(prop = 0.2)|>
+  print()
+
+# 6 longitudes de aleta más corta
+penguins_6shortest_dplyr <- penguins_subset_tidy |> 
+  slice_min(flipper_length_mm, n = 6)|>
+  print()
+```
+
+Con `R base` usamos el lado izquierdo dentro de la nomenclatura indexada y las funciones `head()` y `tail()`. Sin embargo, para los ejemplos 2, 3 y 4, no existe ninguna función o argumento directo para `head()` y `tail()`, por lo que tendremos que definirlos manualmente.
+
+```{r}
+# 30 primeras columnas
+penguins_head30_rbase <- penguins_subset_rbase[1:30, ]
+print(penguins_head30_rbase)
+
+# otra opción
+penguins_head30_rbase <- head(penguins_subset_rbase, 30)
+print(penguins_head30_rbase)
+
+# 30% de las primeras filas
+penguins_head30perc_rbase <- penguins_subset_rbase[1:(nrow(penguins_subset_rbase) * .3), ]
+print(penguins_head30perc_rbase)
+
+# 20% de las últimas filas
+penguins_tail20perc_rbase <- penguins_subset_rbase[(nrow(penguins_subset_rbase)-round(nrow(penguins_subset_rbase) * .2) + 2) : nrow(penguins_subset_rbase), ]
+print(penguins_tail20perc_rbase)
+
+# 6 longitudes de aleta más corta; tenemos que ordenar primero y después hacer el subconjunto:
+penguins_6shortest_rbase <- penguins_subset_rbase[order(penguins_subset_rbase$flipper_length_mm, decreasing = FALSE), ][1:6, ]
+print(penguins_6shortest_rbase)
+```
+
+### Combinar filas
+
+A veces queremos combinar dos datasets con las mismas columnas/variables. Esta acción es bastante simple desde ambos enfoques. Con este ejemplo fusionamos el dataset original con el subconjunto que hemos creado previamente de las 6 longitudes de aletas más cortas.
+
+En `dplyr`, usamos la función `bind_rows()` con los datasets que queramos combinar. Hay que tener en cuenta que si el número de columnas entre ambos datasets es diferente, a la columna extra se le asigna el valor `Na` (no se muestra en este ejemplo).
+
+```{r}
+penguin_combination_dplyr <- bind_rows(penguins,
+                                       penguins_6shortest_dplyr) |> 
+print()
+
+# también podemos emplear el 'pipe' si queremos ingresarlo como una continuación de las operaciones anteriores
+penguin_combination_dplyr <- penguins |>  
+  bind_rows(penguins_6shortest_dplyr) |> 
+print()
+```
+
+En `R base`, usamos `rbind()`, que funciona de manera similar. Sin embargo, si intentamos combinar dos datasets con diferente número de columnas nos devuelve un error.
+
+```{r}
+penguin_combination_rbase <- rbind(penguins, penguins_6shortest_rbase)
+penguin_combination_rbase
+```
+
+En otros casos, puede que queramos unir dos datasets que tengan diferentes columnas/variables, pero que al menos comparten una de ellas en común. En este caso, un poco más complejo, existe una familia de funciones en `dplyr` y una función principal, `merge()`, con distintas variantes de argumentos en `R base`.
+
+Con `dplyr` usamos el conjunto de funciones `*_join()`.
+
+```{r}
+# inner_join(), left_join(), right_join() and full_join() 
+
+# inner_join() si queremos añadir las filas de todo por una variable
+penguin_comb1_dplyr <- inner_join(penguins_subset_tidy,
+                                  penguins_subset_rbase) |> 
+  print()
+
+# full_join() si queremos añadir todas las columnas de ambos datasets
+penguin_comb2_dplyr <- full_join(penguins_subset_tidy,
+                                 penguins_subset_rbase) |> 
+  print()
+
+# right_join() o left_join() si queremos añadir únicamente columnas de uno de los dos datasets
+penguin_comb3_dplyr <- right_join(penguins_subset_tidy,
+                                  penguins_subset_rbase) |> 
+  print()
+```
+
+En `dplyr`, entre la familia de funciones `*_join()` también hay uniones con filtrado: `semi_join()` y `anti_join()` que filtran filas del dataset 1 en función de la presencia o ausencia de coincidencias en el detaset 2. Por ejemplo, del subconjunto que hemos creado previamente con las 30 primeras filas, queremos que excluya los casos que pertenezcan a las 6 longitudes de aleta más cortas:
+
+```{r}
+penguin_exclusion_1 <- anti_join(penguins_head30_dplyr, penguins_6shortest_dplyr)
+print(penguin_exclusion_1)
+```
+
+En `R base`, usamos la función `merge()`, cambiando los argumentos en función de lo que nos interese:
+
+```{r}
+# equivalente a inner_join()
+penguin_comb1_rbase <- merge(penguins_subset_tidy,
+                             penguins_subset_rbase, by = "species") |> 
+  print()
+
+# equivalente a la función full_join()
+penguin_comb2_rbase <- merge(penguins_subset_tidy,
+                             penguins_subset_rbase, by = "species", all = TRUE) |> 
+  print()
+
+# equivalente a la función right_join()
+penguin_comb3_rbase <- merge(penguins_subset_tidy,
+                             penguins_subset_rbase, by = "species", all.y = TRUE) |> 
+  print()
+
+# equivalente a la función left_join()
+penguin_comb4_rbase<- merge(penguins_subset_tidy,
+                            penguins_subset_rbase, by = "species", all.x = TRUE) |> 
+  print()
+
+```
+
+### Detectar y eliminar filas duplicadas
+
+A veces, a lo largo de nuestro procesado de datos, podemos crear observaciones duplicadas por error. Veremos el último ejemplo de combinación de pingüinos (ya que las 6 estimaciones más cortas ahora están duplicadas en el dataset original).
+
+Con `dplyr`, usamos la función `distinct()`.
+
+```{r}
+# dplyr
+penguins_norep_dplyr <- penguin_combination_dplyr |> 
+  distinct()
+
+# podemos hacer una comprobación con la función dim(), que nos indica la dimensión del dataset 
+dim(penguin_combination_dplyr)
+dim(penguins_norep_dplyr)
+```
+
+Con `R base`, usamos la función `unique()` y su implementación en `data.frame()`.
+
+```{r}
+penguins_norep_rbase <- unique.data.frame(penguin_combination_rbase)
+print(penguins_norep_rbase)
+
+# o de esta forma
+penguins_norep_rbase2 <- unique(penguin_combination_rbase)
+print(penguins_norep_rbase2)
+
+# comprobamos:
+dim(penguin_combination_rbase)
+dim(penguins_norep_rbase)
+dim(penguins_norep_rbase2)
+```
+
+## Trabajar con columnas
+
+La manipulación de datos también requiere transformar, organizar e incorporar/excluir variables (columnas, en nuestro dataset). Vamos a ver como trabajar esto con `R base` y con `tidyverse`.
+
+### Crear subconjuntos (subset)
+
+Por lo general, en nuestro dataset tenemos muchas variables que provienen de los datos de origen sin procesar y que no nos interesa usar para los análisis. En el siguiente ejemplo, haremos algunas operaciones para extraer columnas: (1) crear un subconjunto solo por especie, (2) subconjunto por especie, año y sexo, y (3) ordenar el dataset sin extraer columnas.
+
+Con `dplyr`, podemos crear subconjuntos con las columnas que nos interesen mediante la función `select()`. Con la función `relocate()`, podemos cambiar la posición de las columnas dentro del dataset para ordenarlas según nos interese.
+
+```{r}
+# 1
+penguins_spp_dplyr <- penguins |> 
+  select(species) |> 
+  print()
+
+# 2
+penguins_interest_vars_dplyr <- penguins |>  
+  select(year, sex, species) |> 
+  print()
+
+# 3
+penguins_ordervars <- penguins |> 
+  relocate(year, sex, species) |> 
+  print()
+```
+
+Con `R base`, usamos el operador `$` o la nomenclatura indexada:
+
+```{r}
+select1 <- penguins[ ,c("year", "sex", "species")]
+
+# 1
+penguins_spp_rbase <- penguins[ , "species"] 
+print(penguins_spp_rbase)
+
+# 2
+penguins_interest_vars_rbase <- penguins[ , c("year", "sex", "species")]
+print(penguins_interest_vars_rbase)
+
+# 3
+colnames(penguins) # vemos el orden de las columnas para indexarlas y evitar escribir los nombres completos 
+penguins_ordervars_rbase <-penguins[,c(8,7,1:6)]
+print(penguins_ordervars_rbase)
+```
+
+### Cambiar el nombre de las variables
+
+Esta es otra operación muy común para facilitar la lectura o escritura del código.
+
+En `dplyr`, usamos la función `rename()`. Veamos un ejemplo traduciendo a español los nombres de las variables '*species*', '*island*' and '*flipper length*':
+
+```{r}
+penguins_spanish_dplyr <- penguins |>  
+  rename(especie = species, 
+         isla = island,
+         longitud_aleta_mm = flipper_length_mm) |> 
+  print()
+```
+
+Con `R base`, no existe una única forma de renombrar variables, aquí mostramos al menos 3 opciones diferentes:
+
+```{r}
+# primera opción, con indexado 
+penguins2 <- penguins # hacemos un duplicado de la base de datos antes de modificarla
+
+names(penguins2)[1] <- "especie"
+names(penguins2)[2] <- "isla"
+names(penguins2)[5] <- "longitud_aleta_mm"
+head(penguins2)
+
+# segunda opción (seleccionando con operaciones lógicas)
+penguins3 <- penguins
+names(penguins3)[names(penguins3) == "species"] <- "especie"
+names(penguins3)[names(penguins3) == "island"] <- "isla"
+names(penguins3)[names(penguins3) == "flipper_length_mm"] <- "longitud_aleta_mm"
+head(penguins3) 
+
+# tercera opción
+penguins4 <- penguins
+colnames(penguins4)[colnames(penguins4) %in% c("species","island","flipper_length_mm")] <- c("especie","isla","longitud_aleta")
+```
+
+### Crear una nueva columna u operar en una ya existente
+
+Esta es una de las operaciones más básicas en la manipulación de datos. Aquí transforemos la variable del peso corporal de gramos (g) a kilogramos (kg) creando una nueva variable para ello, y por otro lado, agregaremos el sufijo "...*island*" al nombre de la isla en el caso de que se pueda sobreescribir una variable existente.
+
+Con `dplyr`, usamos la función `mutate()`. Si queremos crear una nueva variable y mantener la original, el nombre a la izquierda del argumento debe ser diferente al nombre de la columna original. De lo contrario, podemos sobreescribirla.
+
+```{r}
+# creando nueva variable
+penguins_transformed_dplyr <- penguins |>  
+  mutate(body_mass_kg = body_mass_g/1000) |> 
+  print()
+
+# o sobreescribiendo una existente
+penguins_island_dplyr <-  penguins |>  
+  mutate(island = paste(island, "Island")) |> 
+  print()
+```
+
+Con `R base`, debemos usar el operador de asignación (`<-`) en combinación con el operador `$` para cambiar el nombre de una columna existente (en caso de que el nombre después de `$` sea el mismo nombre de la variable original) o crear una nueva variable.
+
+```{r}
+penguins5 <- penguins 
+penguins5$body_mass_kg <- penguins5$body_mass_g/1000  # creando nueva variable
+penguins5$island <- paste(penguins5$island, "Island") # sobreescribiendo una existente
+```
+
+Para combinar filas, podemos combinar columnas de dos datasets anteriores fácilmente. Primero creamos un subconjunto de variables numéricas y de cadena de caracteres, dejando la variable *year* en ambos datasets, luego los uniremos para ver que sucede.
+
+Con `dplyr` las columnas duplicadas se renombran con "nombre...número".
+
+```{r}
+# subconjuntos
+numeric_penguins <- penguins |> 
+  select(ends_with("mm"), 
+         ends_with("g"), 
+         year) |> 
+  print()
+
+character_penguins <- penguins |>  
+  select(species, island,year) |> 
+  print()
+
+# combinación de columnas
+penguins_alt_dplyr <- numeric_penguins |>  
+  bind_cols(character_penguins) |> 
+  print()
+```
+
+Con `R base`: las columnas duplicadas no son renombradas.
+
+```{r}
+penguins_alt_rbase <- cbind(numeric_penguins,
+                            character_penguins)
+head(penguins_alt_rbase)
+```
+
+## Operaciones combinadas por grupos
+
+Muchas veces tenemos que calcular medias, sumas o extraer valores únicos para cada grupo o nivel dentro de una variable. Hay dos opciones principales para hacer estas operaciones en R.
+
+### Operaciones agrupadas de manera general:
+
+Vamos a hacer varias operaciones:
+
+1.  Masa corporal promedio en general.
+
+2.  Masa corporal promedio en cada isla.
+
+3.  Masa corporal promedio de cada especie en cada isla.
+
+Con `dplyr`: usamos la función `group_by()` para seleccionar la variable para cuyos niveles categóricos queremos aplicar la función de cálculo que nos interesa, y después usamos la función `summarise()` con la columna que queremos transformar y la operación que queramos realizar.
+
+```{r}
+# 1.
+mass_overall_dplyr <- penguins |>  
+  summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) |> 
+  print()
+
+# 2. 
+mass_island_dplyr <- penguins |>  
+  group_by(island) |>  
+  summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) |> 
+  print()
+
+# 3. 
+mass_island_spp_dplyr <- penguins |>  
+  group_by(species, island) |>  
+  summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) |> 
+  print()
+```
+
+Con `R base`, usamos la función `sapply()` para calcular la masa promedio general y la función `aggregate()` para realizar cálculos agrupando por variables y/o niveles de una variable categórica.
+
+```{r}
+# 1. 
+penguins_total_mass_rbase <- sapply(penguins[,"body_mass_g"], 
+                                    mean, 
+                                    na.rm = TRUE)
+print(penguins_total_mass_rbase)
+
+# 2.
+penguins_island_species_mass_rbase <- aggregate(penguins[,"body_mass_g"],
+                                                by = list(penguins$island),
+                                                mean,
+                                                na.rm = TRUE)
+print(penguins_island_species_mass_rbase)
+
+# 3.
+penguins_island_species_mass_rbase <- aggregate(penguins[,"body_mass_g"],
+                                                by = list(penguins$island,
+                                                          penguins$species),
+                                                mean,
+                                                na.rm = TRUE)
+print(penguins_island_species_mass_rbase)
+```
+
+### Extender operaciones de agrupación:
+
+Podemos extender las operaciones de agrupación a diferentes escenarios condicionales. Para este ejemplo, calcularemos dos ejercicios:
+
+1.  Valor promedio para todas las variables continuas.
+2.  Valor promedio para variables de longitud en cada isla.
+
+Con `dplyr`, existen diferentes formas de hacerlo. Aunque algunos años atrás la función de summarise() incluía determinadas variantes como `summarise_if()`, `summarise_all()`, etc; ahora la forma recomendada es usar `summarise(across(., ~function))`.
+
+Para el primer ejercicio, hay 3 enfoques diferentes posibles:
+
+```{r}
+# 1) condicionado a variables numéricas
+penguins_contvars_dplyr <- penguins |>  
+  summarise_if(is.numeric, # seleccioner variables continuas
+               mean, 
+               na.rm = TRUE) |>  
+  select(-year) |>   # excluir el año
+  print()
+
+# 2) sintetizar todas las columnas después de crear subconjuntos, evitando NAs
+penguins_contvars_dplyr <- penguins |> 
+  select(3:6) |> # seleccionar manualmente
+  tidyr::drop_na() |>   # drop_na() del pequete Tidyr (familia Tidyverse)
+  summarise_all(mean) |>  
+  print()
+
+# 3) recomendada en la documentación reciente, siguiendo la notación del paquete Purrr (también de la familia Tidyverse)
+penguins_contvars_dplyr <- penguins |> 
+  summarise(across(where(is.numeric) & # variables numéricas
+                   !year,
+                   ~ mean(.x, na.rm = TRUE))) |> 
+  print()
+```
+
+Para el segundo ejercicio, calcular el valor promedio para variables de longitud en cada isla, seguimos una única aproximación:
+
+```{r}
+penguins_length_island_dplyr <- penguins |> 
+  group_by(island) |>  
+  summarise(across(ends_with("mm"), # varibles de longitud terminadas en "mm" 
+                   ~ mean(.x, na.rm =TRUE))) |> 
+  print()
+```
+
+Con `R base`, para realizar los dos ejercicios vamos a emplear una única aproximación para cada uno:
+
+Para el primer ejercicio, recordemos, valor promedio para todas las variables continuas. Empleamos la función `lapply()`, diseñada para aplicar funciones a todos los elementos de una lista, en combinación con la función `sapply()`, que nos permite iterar sobre una lista o vector sin la necesidad de usar bucles
+
+```{r}
+nums <- unlist(lapply(penguins, is.numeric)) # creamos una lista con las variables numéricas
+penguins_contvars_rbase <- penguins[,nums]   # empleando esa lista, creamos un data.frame
+penguins_totals_rbase <- sapply(penguins_contvars_rbase[,1:4], 
+                                mean, 
+                                na.rm = TRUE)
+print(penguins_totals_rbase)
+```
+
+Para el segundo ejercicio, recordemos, valor promedio para variables de longitud en cada isla. Podemos emplear la función `aggregate()`, que nos permite realizar operaciones estadísticas a un determinado subconjunto de datos.
+
+```{r}
+penguins_milimeters_rbase_agg <- aggregate(penguins[, c("bill_length_mm", "bill_depth_mm", "flipper_length_mm")],
+                                           by = list(penguins$island),
+                                           mean,
+                                           na.rm = TRUE)
+print(penguins_milimeters_rbase_agg)
+```
