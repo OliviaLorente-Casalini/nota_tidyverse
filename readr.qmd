@@ -1,0 +1,181 @@
+---
+title: "[readr](https://readr.tidyverse.org/)"
+toc: true
+toc-depth: 4
+format:
+  gfm: default
+  html:
+    css: ecosistemas.css
+knitr:
+  opts_chunk: 
+    echo: true
+    eval: true
+    error: true
+    collapse: true
+    comment: "#>" 
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+> readr proporciona una forma rápida y amigable de leer datos de archivos delimitados, como valores separados por comas (.csv) y valores separados por tabulaciones (.tsv).
+
+```{r libreria}
+# install.packages("readr")
+library(readr)
+
+# o directamente
+library(tidyverse)
+```
+
+Antes de mostrar las principales funciones de `readr`, vamos a crear unas bases de datos sencillas para poder trabajar con ellas.
+
+```{r message = FALSE, warning = FALSE}
+peas_vector <- c("Green", "Smooth", "116", "9", 
+                 "Green", "Wrinkled", "40", "3",  
+                 "Yellow", "Smooth", "31", "3",  
+                 "Yellow", "Wrinkled", "13", "1")
+
+peas <- as_tibble(matrix(peas_vector, nrow = 4, ncol = 4, byrow = T))
+   
+colnames(peas) <- c("Color", "Textura", "Observacion", "Proporcion")
+      
+peas2_vector <- c("Green", "Smooth", "120", "9", 
+                  "Green", "Wrinkled", "38", "3",  
+                  "Yellow", "Smooth", "32", "3",  
+                  "Yellow", "Wrinkled", "10", "1")
+    
+peas2 <- as_tibble(matrix(peas2_vector, nrow = 4, ncol = 4, byrow = T))
+    
+colnames(peas2) <-c("Color", "Textura", "Observacion", "Proporcion")
+```
+
+## Guardar datos
+
+```{r guardar datos, message = FALSE, warning = FALSE}
+# establecer previamente el directorio de trabajo, donde se guardarán los archivos
+# setwd("mi_directorio_de_trabajo")
+
+# en readr
+write_csv(peas, file = "peas.csv") # archivo separado por comas
+
+write_delim(peas,
+            file = "peas_tab.csv",
+            delim = "|")           # opción de emplear cualquier delimitador
+
+# otras funciones:
+  # write_csv2() archivo separado por ;
+  # write_tsv() archivo .txt 
+
+
+# en R base la sintaxis es muy similar
+write.csv(peas, file = "peas_rbase.csv") # archivo separado por comas
+
+# write.csv2() # archivo separado por ;
+```
+
+## Importar archivos
+
+Con cualquier delimitador
+
+```{r importar, message = FALSE, warning = FALSE}
+# con readr no es necesario especificar el delimitador
+peas_readr <- read_delim("peas_tab.csv")
+glimpse(peas_readr)
+
+# en R base sí
+peas_rbase <- read.delim("peas_tab.csv", sep = "|")
+print(peas_rbase)
+```
+
+Separados por comas
+
+```{r leer archivos, message = FALSE, warning = FALSE}
+# readr
+peas_readr <- read_csv("peas.csv")
+glimpse(peas_readr)
+
+# R base
+peas_rbase <- read.csv("peas.csv")
+print(peas_rbase)
+```
+
+#### Quitar o cambiar encabezado de las columnas
+
+A la hora de leer los archivos en R, se pueden establecer ciertos parámetros en función de las necesidades. Por ejemplo, establecer que el encabezado por defecto no lo detecte como tal y lo lea como una fila más.
+
+```{r encabezado, message = FALSE}
+# readr
+peas_readr <- read_delim("peas.csv", col_names = F)
+glimpse(peas_readr) 
+
+# R base
+peas_rbase <- read.csv("peas.csv", header  = F)
+print(peas_rbase)
+```
+
+Al contrario, puede que las bases de datos no contengan encabezado y se quiera añadir conforme se lee el archivo en R.
+
+```{r no encabezado, message = FALSE}
+# readr
+peas_readr <- read_delim("peas.csv", col_names = c("Colour", "Coat", "Obs", "Ratio"))
+glimpse(peas_readr)
+
+# R base
+colnames(peas_rbase) <- c("Colour", "Coat", "Obs", "Ratio")
+print(peas_rbase)
+```
+
+#### Especificación de columnas
+
+Otro ejemplo, es que al importar los datos para comenzar el trabajo en R, se quiera especificar directamente el formato en el que debe leer cada variable.
+
+```{r especificacion de columnas, message = FALSE}
+# readr
+# en readr, mediante el argumento col_types se pueden especificar las columnas directamente de forma independiente
+peas_readr <- read_csv("peas.csv",
+  col_types = cols(
+    Color = col_factor(),
+    Textura = col_factor(),
+    Observacion = col_integer(),
+    Proporcion = col_integer()
+  )
+)
+
+str(peas_readr)
+
+# adicionalmente se puede realizar con un vector: "ffii", donde se indica que las dos primeras columnas son factores y las dos siguientes son numÃ©ricas
+peas_readr <- read_csv("peas.csv",
+                       col_types = "ffii")
+str(peas_readr)
+
+
+# R base
+peas_rbase <- read.csv("peas.csv")
+str(peas_rbase)
+
+# mediante el argumento colClasses se puede especificar directamente
+peas_rbase <- read.csv("peas.csv", 
+                       colClasses = c("factor", "factor", "integer", "integer"))
+
+```
+
+En `readr` dentro de la función `read_csv()`, además se puede especificar el argumento `guess_max`. En grandes bases de datos, normalmente esta función de `readr` usa las 1000 primeras filas para identificar/establecer el tipo de variable que es cada columna. Se puede usar este argumento, para indicar el número de filas que tiene que usar para determinar el tipo de columna.
+
+#### Leer varios archivos en una misma tabla
+
+Puede ser que tengamos varios archivos complementarios entre sí, pero que contienen información diferente. En este caso, podría ser interesante importarlos todos juntos para comenzar a trabajar con ellos en R.
+
+```{r leer varios archivos en una tabla, message = FALSE, warning = FALSE}
+# en readr, se pueden cargar directamente concatenándolos
+black_eyed_readr <- read_csv(c("peas.csv", "peas2.csv"))
+glimpse(black_eyed_readr)
+
+# con R base se importan por separado y después se pueden unir
+peas_rbase <- read.csv("peas.csv")
+peas_rbase_2 <- read.csv("peas2.csv")
+black_eyed_rbase <- rbind(peas_rbase, peas_rbase_2)
+print(black_eyed_rbase)
+```
+
+En general, la sintaxis entre ambos paquetes es muy similar, pero en algunos casos `readr` reduce la cantidad de código necesario!
