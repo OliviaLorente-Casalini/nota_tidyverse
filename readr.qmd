@@ -81,7 +81,7 @@ Con cualquier delimitador
 ```{r importar, message = FALSE, warning = FALSE}
 # con readr no es necesario especificar el delimitador
 peas_readr <- read_delim("peas_tab.csv")
-glimpse(peas_readr)
+print(peas_readr)
 
 # en R base sí
 peas_rbase <- read.delim("peas_tab.csv", sep = "|")
@@ -93,7 +93,7 @@ Separados por comas
 ```{r leer archivos, message = FALSE, warning = FALSE}
 # readr
 peas_readr <- read_csv("peas.csv")
-glimpse(peas_readr)
+print(peas_readr)
 
 # R base
 peas_rbase <- read.csv("peas.csv")
@@ -107,7 +107,7 @@ A la hora de leer los archivos en R, se pueden establecer ciertos parámetros en
 ```{r encabezado, message = FALSE}
 # readr
 peas_readr <- read_delim("peas.csv", col_names = F)
-glimpse(peas_readr) 
+print(peas_readr) 
 
 # R base
 peas_rbase <- read.csv("peas.csv", header  = F)
@@ -119,7 +119,7 @@ Al contrario, puede que las bases de datos no contengan encabezado y se quiera a
 ```{r no encabezado, message = FALSE}
 # readr
 peas_readr <- read_delim("peas.csv", col_names = c("Colour", "Coat", "Obs", "Ratio"))
-glimpse(peas_readr)
+print(peas_readr)
 
 # R base
 colnames(peas_rbase) <- c("Colour", "Coat", "Obs", "Ratio")
@@ -169,7 +169,7 @@ Puede ser que tengamos varios archivos complementarios entre sí, pero que conti
 ```{r leer varios archivos en una tabla, message = FALSE, warning = FALSE}
 # en readr, se pueden cargar directamente concatenándolos
 black_eyed_readr <- read_csv(c("peas.csv", "peas2.csv"))
-glimpse(black_eyed_readr)
+print(black_eyed_readr)
 
 # con R base se importan por separado y después se pueden unir
 peas_rbase <- read.csv("peas.csv")

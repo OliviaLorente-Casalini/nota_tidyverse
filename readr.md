@@ -83,13 +83,14 @@ Con cualquier delimitador
 ``` r
 # con readr no es necesario especificar el delimitador
 peas_readr <- read_delim("peas_tab.csv")
-glimpse(peas_readr)
-#> Rows: 4
-#> Columns: 4
-#> $ Color       <chr> "Green", "Green", "Yellow", "Yellow"
-#> $ Textura     <chr> "Smooth", "Wrinkled", "Smooth", "Wrinkled"
-#> $ Observacion <dbl> 116, 40, 31, 13
-#> $ Proporcion  <dbl> 9, 3, 3, 1
+print(peas_readr)
+#> # A tibble: 4 x 4
+#>   Color  Textura  Observacion Proporcion
+#>   <chr>  <chr>          <dbl>      <dbl>
+#> 1 Green  Smooth           116          9
+#> 2 Green  Wrinkled          40          3
+#> 3 Yellow Smooth            31          3
+#> 4 Yellow Wrinkled          13          1
 
 # en R base sí
 peas_rbase <- read.delim("peas_tab.csv", sep = "|")
@@ -106,13 +107,14 @@ Separados por comas
 ``` r
 # readr
 peas_readr <- read_csv("peas.csv")
-glimpse(peas_readr)
-#> Rows: 4
-#> Columns: 4
-#> $ Color       <chr> "Green", "Green", "Yellow", "Yellow"
-#> $ Textura     <chr> "Smooth", "Wrinkled", "Smooth", "Wrinkled"
-#> $ Observacion <dbl> 116, 40, 31, 13
-#> $ Proporcion  <dbl> 9, 3, 3, 1
+print(peas_readr)
+#> # A tibble: 4 x 4
+#>   Color  Textura  Observacion Proporcion
+#>   <chr>  <chr>          <dbl>      <dbl>
+#> 1 Green  Smooth           116          9
+#> 2 Green  Wrinkled          40          3
+#> 3 Yellow Smooth            31          3
+#> 4 Yellow Wrinkled          13          1
 
 # R base
 peas_rbase <- read.csv("peas.csv")
@@ -134,13 +136,15 @@ más.
 ``` r
 # readr
 peas_readr <- read_delim("peas.csv", col_names = F)
-glimpse(peas_readr) 
-#> Rows: 5
-#> Columns: 4
-#> $ X1 <chr> "Color", "Green", "Green", "Yellow", "Yellow"
-#> $ X2 <chr> "Textura", "Smooth", "Wrinkled", "Smooth", "Wrinkled"
-#> $ X3 <chr> "Observacion", "116", "40", "31", "13"
-#> $ X4 <chr> "Proporcion", "9", "3", "3", "1"
+print(peas_readr) 
+#> # A tibble: 5 x 4
+#>   X1     X2       X3          X4        
+#>   <chr>  <chr>    <chr>       <chr>     
+#> 1 Color  Textura  Observacion Proporcion
+#> 2 Green  Smooth   116         9         
+#> 3 Green  Wrinkled 40          3         
+#> 4 Yellow Smooth   31          3         
+#> 5 Yellow Wrinkled 13          1
 
 # R base
 peas_rbase <- read.csv("peas.csv", header  = F)
@@ -159,13 +163,15 @@ quiera añadir conforme se lee el archivo en R.
 ``` r
 # readr
 peas_readr <- read_delim("peas.csv", col_names = c("Colour", "Coat", "Obs", "Ratio"))
-glimpse(peas_readr)
-#> Rows: 5
-#> Columns: 4
-#> $ Colour <chr> "Color", "Green", "Green", "Yellow", "Yellow"
-#> $ Coat   <chr> "Textura", "Smooth", "Wrinkled", "Smooth", "Wrinkled"
-#> $ Obs    <chr> "Observacion", "116", "40", "31", "13"
-#> $ Ratio  <chr> "Proporcion", "9", "3", "3", "1"
+print(peas_readr)
+#> # A tibble: 5 x 4
+#>   Colour Coat     Obs         Ratio     
+#>   <chr>  <chr>    <chr>       <chr>     
+#> 1 Color  Textura  Observacion Proporcion
+#> 2 Green  Smooth   116         9         
+#> 3 Green  Wrinkled 40          3         
+#> 4 Yellow Smooth   31          3         
+#> 5 Yellow Wrinkled 13          1
 
 # R base
 colnames(peas_rbase) <- c("Colour", "Coat", "Obs", "Ratio")
@@ -261,13 +267,18 @@ en R.
 ``` r
 # en readr, se pueden cargar directamente concatenándolos
 black_eyed_readr <- read_csv(c("peas.csv", "peas2.csv"))
-glimpse(black_eyed_readr)
-#> Rows: 8
-#> Columns: 4
-#> $ Color       <chr> "Green", "Green", "Yellow", "Yellow", "Green", "Green", "Y~
-#> $ Textura     <chr> "Smooth", "Wrinkled", "Smooth", "Wrinkled", "Smooth", "Wri~
-#> $ Observacion <dbl> 116, 40, 31, 13, 120, 38, 32, 10
-#> $ Proporcion  <dbl> 9, 3, 3, 1, 9, 3, 3, 1
+print(black_eyed_readr)
+#> # A tibble: 8 x 4
+#>   Color  Textura  Observacion Proporcion
+#>   <chr>  <chr>          <dbl>      <dbl>
+#> 1 Green  Smooth           116          9
+#> 2 Green  Wrinkled          40          3
+#> 3 Yellow Smooth            31          3
+#> 4 Yellow Wrinkled          13          1
+#> 5 Green  Smooth           120          9
+#> 6 Green  Wrinkled          38          3
+#> 7 Yellow Smooth            32          3
+#> 8 Yellow Wrinkled          10          1
 
 # con R base se importan por separado y después se pueden unir
 peas_rbase <- read.csv("peas.csv")
