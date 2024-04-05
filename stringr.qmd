@@ -196,9 +196,13 @@ La función `str_match(texto, patrón)` realiza lo mismo que la función `str_ex
 
 ```{r str_match()}
 str_match(versos, "son")
+
 str_match(versos, "(son) (buenos|mejores)")
+
 str_match(versos, "(que|son) ([^ ]+)")
+
 str_match(estrofa, "(que|son) ([^ ]+)")
+
 str_match_all(estrofa, "(que|son) ([^ ]+)")
 ```
 

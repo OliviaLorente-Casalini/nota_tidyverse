@@ -320,6 +320,7 @@ str_match(versos, "son")
 #>  [7,] NA   
 #>  [8,] "son"
 #>  [9,] NA
+
 str_match(versos, "(son) (buenos|mejores)")
 #>       [,1]          [,2]  [,3]     
 #>  [1,] NA            NA    NA       
@@ -331,6 +332,7 @@ str_match(versos, "(son) (buenos|mejores)")
 #>  [7,] NA            NA    NA       
 #>  [8,] NA            NA    NA       
 #>  [9,] NA            NA    NA
+
 str_match(versos, "(que|son) ([^ ]+)")
 #>       [,1]          [,2]  [,3]     
 #>  [1,] "que luchan"  "que" "luchan" 
@@ -342,9 +344,11 @@ str_match(versos, "(que|son) ([^ ]+)")
 #>  [7,] "que luchan"  "que" "luchan" 
 #>  [8,] "son los"     "son" "los"    
 #>  [9,] NA            NA    NA
+
 str_match(estrofa, "(que|son) ([^ ]+)")
 #>      [,1]         [,2]  [,3]    
 #> [1,] "que luchan" "que" "luchan"
+
 str_match_all(estrofa, "(que|son) ([^ ]+)")
 #> [[1]]
 #>      [,1]           [,2]  [,3]      
