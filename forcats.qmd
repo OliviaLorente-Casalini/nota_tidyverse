@@ -1,0 +1,126 @@
+---
+title: "[forcats](https://forcats.tidyverse.org/)"
+toc: true
+toc-depth: 4
+format:
+  gfm: default
+  html:
+    css: ecosistemas.css
+knitr:
+  opts_chunk: 
+    echo: true
+    eval: true
+    error: true
+    collapse: true
+    comment: "#>" 
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+> El paquete forcats provee herramientas para trabajar con factores, la estructura de datos de R para datos categóricos.
+>
+> Un factor es una variable categórica con un número finito de valores o niveles. En R los factores se utilizan habitualmente para realizar clasificaciones de los datos, estableciendo su pertenencia a los grupos o categorías determinados por los niveles del factor.
+>
+> En este documento se incluye la siguiente información:
+>
+> 1)  Factores y sus niveles.
+> 2)  Modificación del orden de los factores.
+> 3)  Modificación de los niveles de los factores.
+
+```{r libreria}
+# install.packages("forcats")
+library(forcats)
+
+# o directamente
+library(tidyverse)
+```
+
+## Modificar niveles de un factor con un orden específico
+
+En algunas ocasiones, puede ser interesante modificar los niveles de un factor para una representación gráfica, ya que a lo mejor, el orden por defecto que establece R no resulta tan intuitivo por la propia naturaleza de los datos.
+
+### `fct_relevel()`
+
+```{r fct_relevel()}
+# forcats
+# se crea primero el dataset
+data <- data.frame(
+  name = c("north","south", "south-east", "north-west", "south-west", "north-east", "west", "east"),
+  val = sample(seq(1, 10), 8))
+
+# y después aplicando la función fct_relevel() 
+data |> 
+  mutate(name = fct_relevel(name, 
+            "north", "north-east", "east", 
+            "south-east", "south", "south-west", 
+            "west", "north-west")) |> 
+  ggplot(aes(x = name, y = val)) +
+    geom_bar(stat = "identity") +
+    xlab("")
+
+
+# R base
+# se crea otro dataset 
+df <- data.frame(region = factor(c("A", "B", "C", "D", "E")),
+                 values = c(12, 18, 21, 14, 34))
+
+# reordenar los niveles del factor por región
+df$region <- factor(df$region, levels = c("C", "B", "A", "D", "E"))
+
+# mostrar los niveles del factor por región
+levels(df$region)
+
+# representación grÃ¡fica igual que en el ejemplo anterior, situando las barras en función de los niveles del factor region
+barplot(df$values, names = df$region)
+```
+
+## Modificar el nombre de los niveles de un factor
+
+En otras ocasiones, puede resultar interesante cambiar el nombre de un determinado nivel en un factor, para simplificarlo, armonizarlo para unir a otro dataset, etc.
+
+### `fct_recode()`
+
+```{r fct_recode()}
+# se crea primero el factor
+fruta <- factor(c("manzana", "pera", "plátano", "naranja"))
+fruta
+
+# forcats
+fct_recode(fruta, M = "manzana", P = "pera", Pl = "plátano", N = "naranja") # lo ordena alfabéticamente
+
+# R base
+factor(fruta, labels = c("M", "P", "Pl", "N"))  # aquí no
+```
+
+## Eliminar niveles
+
+### `fct_drop()`
+
+```{r fct_drop()}
+# crear primero el factor
+f <- factor(c("a", "b"), levels = c("a", "b", "c", "d"))
+f
+
+# forcats
+fct_drop(f, only = "c") 
+
+# R base
+droplevels(f, exclude = "c")
+```
+
+## Añadir niveles
+
+### `fct_expand()`
+
+```{r fct_expand()}
+# crear el factor
+g <- factor(c("a", "b"), levels = c("a", "b"))
+g
+
+# forcats
+fct_expand(g, "c", "d", "e", "f")
+
+# R base
+factor(c("a", "b"), levels = c("a", "b", "c", "d", "e", "f"))
+```
