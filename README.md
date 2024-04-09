@@ -1,4 +1,4 @@
-DOI: 10.5281/zenodo.10949684
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10949684.svg)](https://doi.org/10.5281/zenodo.10949684)
 
 # nota_tidyverse
 
