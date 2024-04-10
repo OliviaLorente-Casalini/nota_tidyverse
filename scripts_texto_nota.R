@@ -2,83 +2,126 @@
 library(palmerpenguins)
 library(tidyverse)
 
-## readr ----
-# leer archivos con readr
-read_delim("penguins.csv")
-read_csv("penguins.csv") 
-str(penguins) # lo lee autom·ticamente como un tibble
+
+# readr -------------------------------------------------------------------
+# leer archivos
+penguins_tb <- read_csv("penguins.csv")
+
 # R base 
-read.csv("penguins.csv")
-str(penguins) # lo lee como data frame
+penguins_df <- read.csv("penguins.csv")
 
 
-## tibble ----
-# tibble permite almacenar columnas de tipo lista
-tibble(x = 1:2, y = list(1:3, letters)) 
-# data frame no permite almacenar columnas de tipo lista
-data.frame(x = 1:2, y = list(1:3, letters))
-# el output de esto es un tibble con listas-columna
-penguins |> 
-  group_by(species) |> 
-  nest()
+# tibble ------------------------------------------------------------------
+# lo lee como un tibble
+head(penguins_tb) 
+
+# lo lee como un data frame
+head(penguins_df)
 
 
-## stringr ----
-penguins <- penguins |> 
-# str_sub() # extrae una parte de una cadena de texto
-mutate(species_code = str_sub(species, start = 1L, end = 3L))
+# dplyr -------------------------------------------------------------------
+# calcular la media de la longitud y profundidad
+# del pico por isla, especie, sexo y a√±o 
+penguins_tb_mean <- penguins_tb |> 
+  group_by(island, species, sex, year) |> 
+  summarise(bill_length_mm_mean = mean(bill_length_mm, na.rm = TRUE), 
+            bill_depth_mm_mean = mean(bill_depth_mm, na.rm = TRUE),
+            .groups = "drop")
+
 # R base
-penguins$species_code <- substr(penguins$species, 1L, 3L)
+penguins_df_mean <- aggregate(cbind(bill_length_mm, bill_depth_mm) ~ island + species + sex + year,
+                              data = penguins_tb,
+                              FUN = function(x) mean(x, na.rm = TRUE))
+
+colnames(penguins_df_mean)[5:6] <- c("bill_length_mm_mean", "bill_depth_mm_mean")
 
 
-## dplyr ----
-penguins_bmass <- penguins |>   
-  group_by(island, species, sex) |>     # operar por niveles (calcular la masa corporal promedio en cada una de las islas)  
-  summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) 
+# tidyr -------------------------------------------------------------------
+# organizar los datos en formato largo en base
+# a la longitud y profundidad del pico
+penguins_tb_mean_long <- penguins_tb_mean |> 
+  pivot_longer(cols = c(bill_length_mm_mean, bill_depth_mm_mean),
+               names_to = "bill_variable",
+               values_to = "bill_value")
+
 # R base
-aggregate(body_mass_g ~ island + species + sex, data = penguins, FUN = mean, na.rm = TRUE) # calcular la masa corporal promedio en cada isla y especie
+penguins_df_mean_long <- reshape(
+  data = penguins_df_mean,
+  varying = list(c("bill_length_mm_mean", "bill_depth_mm_mean")),
+  v.names = "bill_value",
+  times = c("bill_length_mm_mean", "bill_depth_mm_mean"),
+  timevar = "bill_variable",
+  direction = "long"
+)
+
+rownames(penguins_df_mean_long) <- NULL
 
 
-## tidyr ----
-# con el output del ejemplo anterior en dplyr, se reorganizan los datos formando una columna para cada especie donde indica el sexo de cada individuo
-penguins_bmass_wide <- penguins_bmass |> pivot_wider(names_from = species, values_from = sex)
+# stringr -----------------------------------------------------------------
+# extraer las dos primeras palabras de la variable 
+# que hemos creado uniendo la longitud y profundidad del pico
+penguins_tb_mean_long_str <- penguins_tb_mean_long |> 
+  mutate(bill_str = word(bill_variable, start = 1L, end = 2L, sep = "_"))
+
 # R base
-reshape(penguins_bmass, idvar = "species", timevar = "sex", direction = "wide")
+penguins_df_mean_long$bill_str <- sapply(strsplit(penguins_df_mean_long$bill_variable, "_"),
+                                         function(x) paste(x[1:2], collapse = "_"))
+
+penguins_df_mean_long_str <- penguins_df_mean_long
 
 
-## forcats ----
-# reordenar las especies seg˙n el tamaÒo medio de la longitud de la aleta (en orden creciente)
-penguins$sex2 <- fct_recode(penguins$sex, f = "female", m = "male")
+# forcats -----------------------------------------------------------------
+# reordenar los niveles del factor especies manualmente
+penguins_tb_mean_long_str_for <- penguins_tb_mean_long_str |> 
+  mutate(species = fct_relevel(species, c("Chinstrap", "Adelie", "Gentoo")))
+
 # R base
-penguins$sex2 <- factor(penguins$sex, labels = c("f", "m"), levels = c("female", "male"))
+penguins_df_mean_long_str$species <- factor(penguins_df_mean_long_str$species, 
+                                            levels = c("Chinstrap", "Adelie", "Gentoo"))
+
+penguins_df_mean_long_str_for <- penguins_df_mean_long_str
 
 
-## ggplot ----
-plot_species <- function(species_name) {
-  penguins |> 
-    na.omit() |> 
+# ggplot2 -----------------------------------------------------------------
+# generar una grafica mostrando la longitud y
+# profundidad del pico de cada especie
+ggplot(penguins_tb_mean_long_str_for, 
+         aes(x = bill_str, y = bill_value, color = species)) +
+  scale_color_manual(values = c("red", "green", "blue")) +
+  geom_boxplot() +
+  labs(x = "variable", y = "mm")
+
+# R base
+boxplot(bill_value ~ species * bill_str,
+        data = penguins_df_mean_long_str_for,
+        xlab = "species & variable", ylab = "mm",
+        col = c("red", "green", "blue"))
+
+
+# purrr -------------------------------------------------------------------
+# generar una grafica para cada especie
+plot_species_tidy <- function(species_name) {
+  penguin_species_plot <- penguins_tb_mean_long_str_for |> 
     filter(species == species_name) |> 
-    ggplot(aes(x = flipper_length_mm, y = body_mass_g)) +  
-    geom_point() +      
-    geom_smooth(method = "lm", col = "black") +
+    ggplot(aes(x = bill_str, y = bill_value)) +  
+    geom_boxplot() +
+    labs(x = "variable", y = "mm") +
     ggtitle(species_name)
-}
-# R base
-plot_species <- function(species_name) {
-  filtered_data <- na.omit(penguins)
-  filtered_data <- subset(filtered_data, species == species_name)
-  plot(
-    body_mass_g ~ flipper_length_mm,
-    data = filtered_data,
-    main = species_name,
-    xlab = "Flipper Length (mm)",
-    ylab = "Body Mass (g)"
-  )
-  lm_model <- lm(body_mass_g ~ flipper_length_mm, data = filtered_data)
-  abline(lm_model, col = "black")
+  return(penguin_species_plot)
 }
 
-## purrr ----
-map(.x = levels(penguins$species), .f = plot_species)
+map(.x = levels(penguins_tb_mean_long_str_for$species),
+    .f = plot_species_tidy)
+
 # R base
-lapply(X = levels(penguins$species), FUN = plot_species)
+plot_species_base <- function(species_name) {
+  species_data <- subset(penguins_df_mean_long_str_for, species == species_name)
+  penguin_species_plot <- boxplot(bill_value ~ bill_str, data = species_data,
+          xlab = "variable", ylab = "mm",
+          main = species_name)
+  return(penguin_species_plot)
+}
+
+lapply(X = levels(penguins_df_mean_long_str_for$species),
+       FUN = plot_species_base)
+
