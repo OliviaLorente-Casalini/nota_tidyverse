@@ -23,17 +23,17 @@ head(penguins_df)
 # calcular la media de la longitud y profundidad
 # del pico por isla, especie, sexo y año 
 penguins_tb_mean <- penguins_tb |> 
-  group_by(island, species, sex, year) |> 
+  group_by(island, species, year) |> 
   summarise(bill_length_mm_mean = mean(bill_length_mm, na.rm = TRUE), 
             bill_depth_mm_mean = mean(bill_depth_mm, na.rm = TRUE),
             .groups = "drop")
 
 # R base
-penguins_df_mean <- aggregate(cbind(bill_length_mm, bill_depth_mm) ~ island + species + sex + year,
+penguins_df_mean <- aggregate(cbind(bill_length_mm, bill_depth_mm) ~ island + species + year,
                               data = penguins_tb,
                               FUN = function(x) mean(x, na.rm = TRUE))
 
-colnames(penguins_df_mean)[5:6] <- c("bill_length_mm_mean", "bill_depth_mm_mean")
+colnames(penguins_df_mean)[4:5] <- c("bill_length_mm_mean", "bill_depth_mm_mean")
 
 
 # tidyr -------------------------------------------------------------------
@@ -55,6 +55,7 @@ penguins_df_mean_long <- reshape(
 )
 
 rownames(penguins_df_mean_long) <- NULL
+penguins_df_mean_long$id <- NULL
 
 
 # stringr -----------------------------------------------------------------
