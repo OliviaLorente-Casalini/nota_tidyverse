@@ -76,6 +76,10 @@ penguins_df_mean_long_str <- penguins_df_mean_long
 penguins_tb_mean_long_str_for <- penguins_tb_mean_long_str |> 
   mutate(species = fct_relevel(species, c("Chinstrap", "Adelie", "Gentoo")))
 
+# fct_relevel() no altera directamente el orden de los niveles en la tabla,
+# si no que los reordena internamente para determinados procesos, como por 
+# ejemplo, una mejor visualizacion en los graficos
+
 # R base
 penguins_df_mean_long_str$species <- factor(penguins_df_mean_long_str$species, 
                                             levels = c("Chinstrap", "Adelie", "Gentoo"))
