@@ -13,10 +13,10 @@ penguins_df <- read.csv("penguins.csv")
 
 # tibble ------------------------------------------------------------------
 # lo lee como un tibble
-head(penguins_tb) 
+head(penguins_tb, n = 3) 
 
-# lo lee como un data frame
-head(penguins_df)
+# R base lo lee como un data frame
+head(penguins_df, n = 3)
 
 
 # dplyr -------------------------------------------------------------------
@@ -125,4 +125,49 @@ plot_species_base <- function(species_name) {
 
 lapply(X = levels(penguins_df_mean_long_str_for$species),
        FUN = plot_species_base)
+
+
+# pipe -------------------------------------------------------------------
+# grafica de tendencia media anual de masa corporal para cada especie 
+plot_mass_island <- read_csv("penguins.csv") |> 
+  group_by(year, species) |>  
+  summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) |>
+  ggplot(aes(x = year, y = body_mass_g, col = species)) +
+  geom_line() +
+  scale_x_continuous(breaks = c(2007, 2008, 2009)) +
+  labs(x = "year", y = "mean body mass (g)")
+
+plot_mass_island 
+
+# R base
+penguins_df <- read.csv("penguins.csv") 
+
+aggregated_data <- aggregate(body_mass_g ~ year + species, data = penguins, 
+                             FUN = function(x) mean(x, na.rm = TRUE))
+
+par(mar = c(5, 4, 4, 8), xpd = TRUE)
+
+plot(aggregated_data$year, aggregated_data$body_mass_g, type = "n", xlab = "year", ylab = "mean body mass (g)", xaxt = "n")
+
+# Separar los datos por especie
+species_data_list <- split(aggregated_data, aggregated_data$species)
+
+# Función para dibujar líneas
+plot_species_line <- function(data, color) {
+  lines(data$year, data$body_mass_g, col = color, type = "o")
+}
+
+species_colors <- c("Adelie" = "red", "Chinstrap" = "green", "Gentoo" = "blue")
+
+# Aplicar la función a cada elemento de la lista utilizando lapply
+lapply(names(species_data_list), function(species) {
+  plot_species_line(species_data_list[[species]], species_colors[[species]])
+})
+
+axis(1, at = c(2007, 2008, 2009))
+
+legend("topright", inset = c(-0.3, 0.3),
+       legend = names(species_colors), col = species_colors, lty = 1, title = "Species")
+
+
 
