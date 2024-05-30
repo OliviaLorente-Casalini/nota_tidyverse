@@ -149,17 +149,14 @@ par(mar = c(5, 4, 4, 8), xpd = TRUE)
 
 plot(aggregated_data$year, aggregated_data$body_mass_g, type = "n", xlab = "year", ylab = "mean body mass (g)", xaxt = "n")
 
-# Separar los datos por especie
 species_data_list <- split(aggregated_data, aggregated_data$species)
 
-# Función para dibujar líneas
 plot_species_line <- function(data, color) {
   lines(data$year, data$body_mass_g, col = color, type = "o")
 }
 
 species_colors <- c("Adelie" = "red", "Chinstrap" = "green", "Gentoo" = "blue")
 
-# Aplicar la función a cada elemento de la lista utilizando lapply
 lapply(names(species_data_list), function(species) {
   plot_species_line(species_data_list[[species]], species_colors[[species]])
 })
@@ -168,6 +165,4 @@ axis(1, at = c(2007, 2008, 2009))
 
 legend("topright", inset = c(-0.3, 0.3),
        legend = names(species_colors), col = species_colors, lty = 1, title = "Species")
-
-
 
