@@ -3,12 +3,20 @@ library(palmerpenguins)
 library(tidyverse)
 
 
+# exportar como csv -------------------------------------------------------
+# tidyverse
+write_csv(penguins, "penguins1.csv")
+
+# R base
+write.csv(penguins, "penguins2.csv")
+
+
 # readr -------------------------------------------------------------------
 # leer archivos
-penguins_tb <- read_csv("penguins.csv")
+penguins_tb <- read_csv("penguins1.csv")
 
 # R base 
-penguins_df <- read.csv("penguins.csv")
+penguins_df <- read.csv("penguins2.csv")
 
 
 # tibble ------------------------------------------------------------------
@@ -133,7 +141,7 @@ lapply(X = levels(penguins_df_mean_long_str_for$species),
 
 # pipe -------------------------------------------------------------------
 # grafica de tendencia media anual de masa corporal para cada especie 
-plot_mass_island <- read_csv("penguins.csv") |> 
+plot_mass_island <- read_csv("penguins1.csv") |> 
   group_by(year, species) |>  
   summarise(body_mass_g = mean(body_mass_g, na.rm = TRUE)) |>
   ggplot(aes(x = year, y = body_mass_g, col = species)) +
@@ -144,7 +152,7 @@ plot_mass_island <- read_csv("penguins.csv") |>
 plot_mass_island 
 
 # R base
-penguins_df <- read.csv("penguins.csv") 
+penguins_df <- read.csv("penguins2.csv") 
 
 aggregated_data <- aggregate(body_mass_g ~ year + species, data = penguins, 
                              FUN = function(x) mean(x, na.rm = TRUE))
